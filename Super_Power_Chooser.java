@@ -3,12 +3,18 @@ package Destiny2;
 import Destiny2.Misc.Misc;
 import Destiny2.Misc.Summon;
 import Destiny2.Misc.Test_Listener;
-import Destiny2.Super_Power.Well_Of_Radiance_Listener;
+import Destiny2.Super_Power.*;
+import Destiny2.Variable_Construction.Equipments;
 import Destiny2.Variable_Construction.Exp;
-import Destiny2.Variable_Construction.Position;
+import Destiny2.Variable_Construction.Items;
+import net.minecraft.server.v1_16_R3.EntityBlaze;
+import net.minecraft.server.v1_16_R3.EntityVillager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.craftbukkit.libs.org.eclipse.sisu.Nullable;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftBlaze;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftVillager;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.Listener;
@@ -19,15 +25,22 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 import org.bukkit.inventory.meta.Damageable;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 
 public class Super_Power_Chooser implements Listener{
+    public static Map<Player, Equipments> Player_Equipment=DestinyMain.Player_Equipment;
+    static LinkedList<Player> Super_Power_User=DestinyMain.Super_Power_User;
+    public static Map<Player, BukkitTask> task=new HashMap<>();
+    public Map<Player, Chaos_Reach.LaserRunnable> lasers=Chaos_Reach.lasers;
     @EventHandler
     public void Listener(PlayerToggleSneakEvent ptse){
         Player p=ptse.getPlayer();
@@ -42,32 +55,49 @@ public class Super_Power_Chooser implements Listener{
 //        }
         if(m== Material.END_CRYSTAL&&ptse.isSneaking()){
             switch (i.getItemMeta().getDisplayName()) {
-                case "é›·éœ†å†²å‡»" -> Thunder_Crash(p);
-                case "å…‰ç„°ä¹‹äº•" -> Well_Of_Radiance(p);
-                case "ç‹©çŒé™·é˜±" -> Shadow_Shot(p, false);
-                case "è«æ¯”ä¹Œæ–¯ç®­è¢‹" -> Shadow_Shot(p, true);
-                case "ç²¾å‡†é»„é‡‘æª" -> Golden_Gun(p, true);
-                case "çƒˆç„°é»„é‡‘æª" -> Golden_Gun(p, false);
-                case "é£èµ·äº‘æ¶Œ" -> Gathering_Storm(p);
-                case "æ–°æ˜Ÿç‚¸å¼¹-ç¾å˜" -> Nova_Bomb(p, false);
-                case "æ–°æ˜Ÿç‚¸å¼¹-æ¶¡æµ" -> Nova_Bomb(p, true);
-                case "é¬¼çµåˆ©åˆƒ" -> Spectral_Blades(p);
-                case "å“¨å…µåœ£ç›¾"->Sentinel_Shield(p);
-                case "é»æ˜"->Daybreak(p);
+                case "À×öª³å»÷" -> Thunder_Crash(p);
+                case "¹âÑæÖ®¾®" -> Well_Of_Radiance(p);
+                case "á÷ÁÔÏİÚå" -> Shadow_Shot(p, false);
+                case "Äª±ÈÎÚË¹¼ı´ü" -> Shadow_Shot(p, true);
+                case "¾«×¼»Æ½ğÇ¹" -> Golden_Gun(p, true);
+                case "ÁÒÑæ»Æ½ğÇ¹" -> Golden_Gun(p, false);
+                case "·çÆğÔÆÓ¿" -> Gathering_Storm(p);
+                case "ĞÂĞÇÕ¨µ¯-ÔÖ±ä" -> Nova_Bomb(p, false);
+                case "ĞÂĞÇÕ¨µ¯-ÎĞÁ÷" -> Nova_Bomb(p, true);
+                case "¹íÁéÀûÈĞ" -> Spectral_Blades(p);
+                case "ÉÚ±øÊ¥¶Ü"->Sentinel_Shield(p);
+                case "ÀèÃ÷"->Daybreak(p);
+                case "ÀûÈĞµ¯Ä»"->Blade_Barrage(p);
+                case "³ÁÄ¬¿ñĞ¥"->Silence_and_Squall(p);
                 //case "test" -> test(p);
                 //case "playSound"->playSound(p);
+                case "»ìãçÖ®´¥"-> {
+                    try {
+                        lasers.put(p, new Chaos_Reach.LaserRunnable(p));
+                        lasers.get(p).runTaskTimer(DestinyMain.getPlugin(DestinyMain.class), 5, 1);
+                        Chaos_Reach.Chaos_Reach_Start(p);
+                    } catch (ReflectiveOperationException e) {
+                        e.printStackTrace();
+                    }
+                }
+                case "È¼ÉÕ¶Í´¸"->Burning_Maul(p);
+                case "À×öªÍò¾û"->Storm_Trance(p);
+                case "Ñ×ÑôÖ®´¸"->Hammer_of_Sol(p);
+                case "moveto"->navigateTo(p,3+p.getLocation().getX()+Math.random()*4*Misc.RandomPositiveMinus(),p.getLocation().getY(),3+p.getLocation().getZ()+Math.random()*4*Misc.RandomPositiveMinus());
+                case "movetoo"->navigateToo(p,3+p.getLocation().getX()+Math.random()*4*Misc.RandomPositiveMinus(),p.getLocation().getY(),3+p.getLocation().getZ()+Math.random()*4*Misc.RandomPositiveMinus());
+
             }
         }
     }
-    //æµ‹è¯•ä»£ç 
+    //²âÊÔ´úÂë
     public void test(Player p){
-        //æ‰‹æŒç‰©å“
+        //ÊÖ³ÖÎïÆ·
         ItemStack sword=new ItemStack(Material.GOLDEN_SWORD);
         sword.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
         ItemMeta swordMeta= sword.getItemMeta();
         swordMeta.setDisplayName("Well_Of_Radiance");
         sword.setItemMeta(swordMeta);
-        //å¬å”¤ç›”ç”²æ¶,è®¾ç½®ç›”ç”²æ¶,æ·»åŠ tag,ä¿®æ”¹åå­—,æ—‹è½¬
+        //ÕÙ»½¿ø¼×¼Ü,ÉèÖÃ¿ø¼×¼Ü,Ìí¼Ótag,ĞŞ¸ÄÃû×Ö,Ğı×ª
         Entity e=p.getWorld().spawnEntity(p.getLocation(),EntityType.ARMOR_STAND);
 
         if(e.getLocation().getBlock().getType()!=Material.AIR){
@@ -77,7 +107,7 @@ public class Super_Power_Chooser implements Listener{
         ArmorStand as= (ArmorStand) e;
         as.setRotation(DestinyMain.Te.getv1(),DestinyMain.Te.getv2());
         Bukkit.broadcastMessage(DestinyMain.Te.getv1()+"/"+DestinyMain.Te.getv2());
-        //æ‰‹è‡‚æ—‹è½¬
+        //ÊÖ±ÛĞı×ª
         as.setLeftArmPose(new EulerAngle(0,0,0));
         as.setRightArmPose(new EulerAngle(DestinyMain.Te.getX(),DestinyMain.Te.getY(),DestinyMain.Te.getZ()));
         Bukkit.broadcastMessage(DestinyMain.Te.getX()+"/"+DestinyMain.Te.getY()+"/"+DestinyMain.Te.getZ());
@@ -85,34 +115,83 @@ public class Super_Power_Chooser implements Listener{
 
     }
 
+    //ÉúÎïÒÆ¶¯·¢°ü
+    public boolean navigateTo(Player p, double x, double y, double z) {
+        Villager villager=null;
+        for(Entity e:p.getNearbyEntities(20,20,20)){
+            if(e instanceof Villager v){
+                villager=v;
+                break;
+            }
+        }
+        if(villager==null){
+            return false;
+        }
+        EntityVillager v = ((CraftVillager) villager).getHandle();
+        return v.getNavigation().a(x, y, z, 0.84);
+    }
+
+    public boolean navigateToo(Player p, double x, double y, double z) {
+        Blaze Blaze=null;
+        for(Entity e:p.getNearbyEntities(20,20,20)){
+            if(e instanceof Blaze v){
+                Blaze=v;
+                break;
+            }
+        }
+        if(Blaze==null){
+            return false;
+        }
+        EntityBlaze b=((CraftBlaze) Blaze).getHandle();
+        b.setGoalTarget(null);
+        return b.getNavigation().a(x, y, z, 1f);
+    }
+
+
 
     public void playSound(Player p){
         p.getWorld().playSound(p.getLocation(),Sound.AMBIENT_BASALT_DELTAS_MOOD,SoundCategory.PLAYERS,10,0.8f);
     }
 
+    //Ô¤·ÀÊ¹ÓÃ¶à¸ö³¬ÄÜ
+    public static boolean add_User_List(Player p){
+        if(!Super_Power_User.contains(p)){
+            Super_Power_User.add(p);
+            return false;
+        }
+        return true;
+    }
+    public static void remove_User_List(Player p){
+        Super_Power_User.remove(p);
+    }
 
-    //é›·éœ†å†²å‡»
+    //À×öª³å»÷
     public void Thunder_Crash(Player p){
-        //ä½ç½®å‚¨å­˜,ç»éªŒå‚¨å­˜
-        Position position=new Position();
-        Exp exp=new Exp(p.getLevel(),p.getExp());
-        p.setVelocity(p.getVelocity().setY(p.getVelocity().getY()+0.7));
-        p.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
+//        //Î»ÖÃ´¢´æ,¾­Ñé´¢´æ
+//        Position position=new Position();
+//        Exp exp=new Exp(p.getLevel(),p.getExp());
+//        p.setVelocity(p.getVelocity().setY(p.getVelocity().getY()+0.7));
+//        p.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
 
-        //é˜ç¿…,æ­»ç»‘,å¹¶å¼ºåˆ¶æ›¿æ¢æŠ¤ç”²
+        //ÇÊ³á,ËÀ°ó,²¢Ç¿ÖÆÌæ»»»¤¼×
         //===============================================
+
+        if(add_User_List(p)){
+            return;
+        }
+        Thunder_Crash_Listener.Thunder_Crash_User.add(p);//Ìí¼ÓÍæ¼Ò
+        Player_Equipment.put(p,new Equipments(p));//±£´æÍæ¼Ò×°±¸
         ItemStack i=new ItemStack(Material.ELYTRA);
         ItemMeta im=i.getItemMeta();
-        im.setDisplayName("Â§fé›·éœ†å†²å‡»");
+        im.setDisplayName("¡ìfÀ×öª³å»÷");
         i.setItemMeta(im);
         i.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
         p.getEquipment().setChestplate(i);
-        p.addScoreboardTag("Thunder_Crash");
-        new BukkitRunnable() {
+        task.put(p,new BukkitRunnable() {
             int time=110;
-            boolean op=true;
-            Location location=p.getLocation();
-            double MaxHeight=10;
+            boolean initialized=false;
+            final Location location=p.getLocation();
+            final double MaxHeight=10;
             @Override
             public void run() {
                 if(p.isGliding()){
@@ -132,81 +211,83 @@ public class Super_Power_Chooser implements Listener{
 
                     p.setVelocity(p.getLocation().getDirection().multiply(0.65f).setY(finalY));
                 }
-                //è¿›å…¥æ»‘è¡Œ,èµ‹äºˆåˆåŠ¨é‡,å¼€å§‹æ’å‡»è®¡åˆ’
-                if(op) {
+                //½øÈë»¬ĞĞ,¸³Óè³õ¶¯Á¿,¿ªÊ¼×²»÷¼Æ»®
+                if(!initialized) {
                     p.setGliding(true);
-                    p.setVelocity(p.getPlayer().getLocation().getDirection().multiply(0.85));
-                    p.addScoreboardTag("No_Fall_Damage");
-                    //ç»™äºˆ5ç§’æŠ—æ€§2,æ’­æ”¾çˆ†ç‚¸å’Œå‡‹é›¶å¤æ´»,å¤‡ä»½ç»éªŒå€¼,å¼€å§‹
+                    p.setVelocity(p.getLocation().getDirection().multiply(0.85));
+                    //¸øÓè5Ãë¿¹ĞÔ2,²¥·Å±¬Õ¨ºÍµòÁã¸´»î
                     p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,110,2,false));
                     p.getWorld().playSound(p.getLocation(),Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS,200,0.5f);
                     p.getWorld().playSound(p.getLocation(),Sound.ENTITY_WITHER_SPAWN, SoundCategory.PLAYERS,200,0.8f);
-                    op=false;
+                    initialized=true;
                 }
-                if(time<0||p.isDead()||p.isFlying()){
-                    p.getScoreboardTags().remove("Thunder_Crash");
-                    p.getScoreboardTags().remove("No_Fall_Damage");
+                if(Misc.NearlyTarget(p,0.5,0.5,0.5)!=null){
+                    p.getInventory().setChestplate(new ItemStack(Material.AIR));
+                }
+                if(time<=0||p.isDead()||p.isFlying()){
+                    remove_User_List(p);
+                    Thunder_Crash_Listener.Thunder_Crash_User.remove(p);
                     if(p.hasPotionEffect(PotionEffectType.DAMAGE_RESISTANCE)){
                         p.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
                     }
-                    p.getEquipment().setChestplate(new ItemStack(Material.AIR));
+                    p.getInventory().setChestplate(Player_Equipment.get(p).getChest());
+                    Player_Equipment.remove(p);
                     this.cancel();
                 }
                 time--;
             }
-        }.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),5,1);
+        }.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),5,1));
     }
 
-    //å…‰ç„°ä¹‹äº•
+    //¹âÑæÖ®¾®
     public void Well_Of_Radiance(Player p){
 
-        //æ‰‹æŒç‰©å“
+        //ÊÖ³ÖÎïÆ·
         ItemStack sword=new ItemStack(Material.GOLDEN_SWORD);
         sword.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
         ItemMeta swordMeta= sword.getItemMeta();
         swordMeta.setDisplayName("Well_Of_Radiance");
         sword.setItemMeta(swordMeta);
-        //å¬å”¤ç›”ç”²æ¶,è®¾ç½®ç›”ç”²æ¶,æ·»åŠ tag,ä¿®æ”¹åå­—,æ—‹è½¬
-        Entity e=p.getWorld().spawnEntity(p.getLocation().subtract(0,0.5f,0),EntityType.ARMOR_STAND);
 
-        if(e.getLocation().getBlock().getType()!=Material.AIR){
-            e.setGravity(false);
-        }
-        ArmorStand as= (ArmorStand) e;
-        //æ— æ•Œ
-        as.setInvulnerable(true);
-        //å¯è§†
+        ArmorStand as=(ArmorStand) p.getWorld().spawnEntity(p.getLocation(),EntityType.ARMOR_STAND);
+        as.addScoreboardTag("Clean");
+        //Ìí¼ÓÁĞ±í
+        Well_Of_Radiance_Listener.ArmorStands.add(as);
+        //ÎŞµĞ
+        as.setInvulnerable(false);
+        //¿ÉÊÓ
         as.setVisible(false);
-        //ç¢°æ’ä½“ç§¯
+        //Åö×²Ìå»ı
         as.setCollidable(false);
-        //åº•åº§
+        //µ××ù
         as.setBasePlate(false);
-        //è‡ªå®šåå­—å¯è§†
-        e.setCustomNameVisible(false);
-        //æ·»åŠ Tag
-        e.addScoreboardTag("Well_Of_Radiance_ArmorStand");
-        e.addScoreboardTag(p.getUniqueId().toString());
-        //æ”¹å
-        e.setCustomName(ChatColor.GOLD+"Well_Of_Radiance_ArmorStand");
-        //æ‰‹è‡‚æ—‹è½¬
+        //×Ô¶¨Ãû×Ö¿ÉÊÓ
+        as.setCustomNameVisible(false);
+        //Ìí¼ÓTag
+        Well_Of_Radiance_Listener.ArmorStands.add(as);
+        Well_Of_Radiance_Listener.Well_Of_Radiance_Owner.put(as,p);
+        as.addScoreboardTag("Well_Of_Radiance_ArmorStand");
+        as.addScoreboardTag(p.getUniqueId().toString());
+        //¸ÄÃû
+        as.setCustomName(ChatColor.GOLD+"Well_Of_Radiance_ArmorStand");
+        //ÊÖ±ÛĞı×ª
         as.setRightArmPose(new EulerAngle(1.40f,1.55f,0));
 
-        //æŒå‰‘
+        //³Ö½£
         as.getEquipment().setItemInMainHand(sword);
 
-        //æ’å‰‘å¹¶ä¸”ä¸‹é™
+        //²å½£²¢ÇÒÏÂ½µ
         p.setVelocity(new Vector().setY(-0.1f));
 
-        //ç›”ç”²æ¶ä¸‹é™åå…³é—­é‡åŠ›
+        //¿ø¼×¼ÜÏÂ½µºó¹Ø±ÕÖØÁ¦
         BukkitRunnable ArmorSet=new BukkitRunnable() {
-            int time=40;
+            int time=100;
             @Override
             public void run() {
                 if(as.isOnGround()){
                     as.setGravity(false);
-                    e.getLocation().setY(e.getLocation().getY()-0.3f);
                     Well_Of_Radiance_Listener.Recovery(as);
-                    for(Entity entity:as.getWorld().getNearbyEntities(as.getLocation(),5,5,5)){
+                    for(Entity entity:as.getWorld().getNearbyEntities(as.getLocation(),Well_Of_Radiance_Listener.Well_Of_Radiance_Radius,Well_Of_Radiance_Listener.Well_Of_Radiance_Radius,Well_Of_Radiance_Listener.Well_Of_Radiance_Radius)){
                         if(entity instanceof LivingEntity le&&le.getUniqueId()!=p.getUniqueId() &&le!=as){
                             le.setFireTicks(100);
                             le.damage(5.0,p);
@@ -223,12 +304,14 @@ public class Super_Power_Chooser implements Listener{
                 time--;
             }
         };
+
         if(!p.isOnGround()){
-            ArmorSet.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),0,5);
+            ArmorSet.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),0,1);
         }else{
             Well_Of_Radiance_Listener.Recovery(as);
-            for(Entity entity:as.getWorld().getNearbyEntities(as.getLocation(),5,5,5)){
-                if(entity instanceof LivingEntity le&&le.getUniqueId()!=p.getUniqueId()&&!(le instanceof ArmorStand)){
+            as.setGravity(false);
+            for(Entity entity:as.getWorld().getNearbyEntities(as.getLocation(),Well_Of_Radiance_Listener.Well_Of_Radiance_Radius,Well_Of_Radiance_Listener.Well_Of_Radiance_Radius,Well_Of_Radiance_Listener.Well_Of_Radiance_Radius)){
+                if(entity instanceof LivingEntity le&&le.getUniqueId()!=Well_Of_Radiance_Listener.Well_Of_Radiance_Owner.get(as).getUniqueId() &&!(le instanceof ArmorStand)){
                     le.setFireTicks(100);
                     le.damage(5.0,p);
                     le.setNoDamageTicks(0);
@@ -238,70 +321,77 @@ public class Super_Power_Chooser implements Listener{
         p.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
     }
 
+    //Ğé¿Õ¼ı
     public void Shadow_Shot(Player p,boolean isMobius){
-        //newå¼“å’Œå¼“ç®­,å¼“ç®­æ•°é‡,æ”¹å
+        if(add_User_List(p)){
+            return;
+        }
+        //new¹­ºÍ¹­¼ı,¹­¼ıÊıÁ¿,¸ÄÃû
         ItemStack Bow=new ItemStack(Material.BOW);
         ItemStack Arrow=new ItemStack(Material.ARROW);
         ItemMeta BowMeta=Bow.getItemMeta();
         ItemMeta ArrowMeta=Arrow.getItemMeta();
         int Amount;
-        p.addScoreboardTag("Shadow_Shot_Using");
-        p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,110,2,false));
-        //é‡å‘½å
+        //Ìí¼ÓUser
+        Shadow_Shot_Fix_Listener.Shadow_Shot_User.add(p);
+//        p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,110,2,false));
+        //ÖØÃüÃû
         //Deadfall/Mobius Quiver
         if(isMobius){
-            BowMeta.setDisplayName("è«æ¯”ä¹Œæ–¯ç®­è¢‹");
-            ArrowMeta.setDisplayName("è«æ¯”ä¹Œæ–¯å¼“ç®­");
+            BowMeta.setDisplayName("Äª±ÈÎÚË¹¼ı´ü");
+            ArrowMeta.setDisplayName("Äª±ÈÎÚË¹¹­¼ı");
             Bow.setItemMeta(BowMeta);
             Arrow.setItemMeta(ArrowMeta);
             Arrow.setAmount(2);
             Amount=2;
-            //æ·»åŠ è¶…èƒ½ä½¿ç”¨ä¸­Tag
-            p.addScoreboardTag("Shadow_Shot_Mobius");
-            p.addScoreboardTag("Shadow_Shot_Arrow_1");
+            //Ìí¼Ó³¬ÄÜÊ¹ÓÃÖĞTag
+            Shadow_Shot_Fix_Listener.Amount.put(p,Amount);
+            Shadow_Shot_Fix_Listener.Using_Mobius.add(p);
         }else{
-            BowMeta.setDisplayName("ç‹©çŒé™·é˜±");
-            ArrowMeta.setDisplayName("ç‹©çŒé™·é˜±å¼“ç®­");
+            BowMeta.setDisplayName("á÷ÁÔÏİÚå");
+            ArrowMeta.setDisplayName("á÷ÁÔÏİÚå¹­¼ı");
             Bow.setItemMeta(BowMeta);
             Arrow.setItemMeta(ArrowMeta);
             Amount=1;
-            //æ·»åŠ è¶…èƒ½ä½¿ç”¨ä¸­Tag
-            p.addScoreboardTag("Shadow_Shot_DeadFall");
         }
-        //è®¾ç½®å¼“è€ä¹…
+        //ÉèÖÃ¹­ÄÍ¾Ã
         Damageable bd=(Damageable) Bow.getItemMeta();
         bd.setDamage(Bow.getType().getMaxDurability()-Amount);
         Bow.setItemMeta((ItemMeta) bd);
 
 
-        //ç»™å¼“å’Œå¼“ç®­é™„é­”,ç»‘5
+        //¸ø¹­ºÍ¹­¼ı¸½Ä§,°ó5
         Bow.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
         Arrow.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
-        //æ”¾ç½®å¼“äºä¸»æ‰‹,å¼“ç®­äºå‰¯æ‰‹
+        //·ÅÖÃ¹­ÓÚÖ÷ÊÖ,¹­¼ıÓÚ¸±ÊÖ
         p.getEquipment().setItemInOffHand(Arrow);
         p.getEquipment().setItemInMainHand(Bow);
-        //æ·»åŠ è¶…èƒ½ä½¿ç”¨ä¸­Tag
     }
 
-    //é£èµ·äº‘æ¶Œ
+    //·çÆğÔÆÓ¿
     public void Gathering_Storm(Player p){
-        p.addScoreboardTag("Gathering_Storm");
+        if(add_User_List(p)){
+            return;
+        }
+        Gathering_Storm_Listener.Gathering_Storm_User.add(p);
+
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.PLAYERS, 2.0f, 0.6f);
+
         ItemStack Trident=new ItemStack(Material.TRIDENT);
         Trident.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
         ItemMeta TridentMeta=Trident.getItemMeta();
-        TridentMeta.setDisplayName("å‰å­");
+        TridentMeta.setDisplayName("²æ×Ó");
         Trident.setItemMeta(TridentMeta);
         p.getInventory().setItemInMainHand(Trident);
-        p.addScoreboardTag("Gathering_Storm_Using");
-        //å‰å­å®šæ—¶
+        //²æ×Ó¶¨Ê±
         BukkitRunnable Timer=new BukkitRunnable() {
-            int time=DestinyMain.H.getSuper_Power_Activate_Time();
+            int time=Gathering_Storm_Listener.Super_Power_Activate_Time;
             @Override
             public void run() {
                 if(time<=0){
                     p.getInventory().removeItem(Trident);
-                    p.getScoreboardTags().remove("Gathering_Storm_Using");
-                    p.getScoreboardTags().remove("Gathering_Storm");
+                    remove_User_List(p);
+                    Gathering_Storm_Listener.Gathering_Storm_User.remove(p);
                     this.cancel();
                     return;
                 }
@@ -315,63 +405,87 @@ public class Super_Power_Chooser implements Listener{
         Timer.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),0,20);
     }
 
-    //æ–°æ˜Ÿç‚¸å¼¹
+    //ĞÂĞÇÕ¨µ¯
     public void Nova_Bomb(Player p,boolean isVortex){
+        if(add_User_List(p)){
+            return;
+        }
+
         ItemStack sb=new ItemStack(Material.SNOWBALL);
         sb.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
         ItemMeta sbMate=sb.getItemMeta();
         if(isVortex){
-            sbMate.setDisplayName("æ–°æ˜Ÿç‚¸å¼¹-æ¶¡æµ");
-            p.addScoreboardTag("Nova_Bomb_Using");
-            p.addScoreboardTag("Nova_Bomb_Vortex");
+            sbMate.setDisplayName("ĞÂĞÇÕ¨µ¯-ÎĞÁ÷");
+//            p.addScoreboardTag("Nova_Bomb_Using");
+//            p.addScoreboardTag("Nova_Bomb_Vortex");
 //            p.addScoreboardTag("Nova_Damage_Reduce");
+            Nova_Bomb_Listener.Cataclysm_Bomb_Model.put(p,false);
         }else{
-            sbMate.setDisplayName("æ–°æ˜Ÿç‚¸å¼¹-ç¾å˜");
-            p.addScoreboardTag("Nova_Bomb_Using");
-            p.addScoreboardTag("Nova_Bomb_Cataclysm");
+            sbMate.setDisplayName("ĞÂĞÇÕ¨µ¯-ÔÖ±ä");
+//            p.addScoreboardTag("Nova_Bomb_Using");
+//            p.addScoreboardTag("Nova_Bomb_Cataclysm");
 //            p.addScoreboardTag("Nova_Damage_Reduce");
+            Nova_Bomb_Listener.Cataclysm_Bomb_Model.put(p,true);
         }
+        Nova_Bomb_Listener.Nova_Bomb_User.add(p);
         sb.setItemMeta(sbMate);
         p.getInventory().setItemInMainHand(sb);
     }
 
-    //é»„é‡‘æª
+    //»Æ½ğÇ¹
     public void Golden_Gun(Player p,boolean is3){
-        final int total_time;
-        //newæª,é™„é­”,ä½¿ç”¨æ—¶é—´
-        ItemStack Gun=new ItemStack(Material.GOLDEN_HOE);
-        Gun.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
-        //æ·»åŠ è¶…èƒ½ä½¿ç”¨ä¸­Tag
-        p.addScoreboardTag("Golden_Gun_Using");
-        ItemMeta GunMeta=Gun.getItemMeta();
+        if(add_User_List(p)){
+            return;
+        }
+        Golden_Gun_Listener.Golden_Gun_User.add(p);
+        Player_Equipment.put(p,new Equipments(p));
+        ItemStack Gun;
         if(is3){
-            total_time=25;
-            p.addScoreboardTag("Golden_Gun_3");
-            GunMeta.setDisplayName("ç²¾å‡†é»„é‡‘æª");
+            Gun=Items.getGolden_Gun(true);
+            Golden_Gun_Listener.Ammo3.add(p);
             p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,500,2,false));
         }else{
-            total_time=15;
-            p.addScoreboardTag("Golden_Gun_6");
-            GunMeta.setDisplayName("çƒˆç„°é»„é‡‘æª");
+            Gun=Items.getGolden_Gun(false);
+            Golden_Gun_Listener.Ammo6.add(p);
             p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,240,1,false));
         }
-        Gun.setItemMeta(GunMeta);
         p.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
         p.getInventory().setItemInMainHand(Gun);
     }
+//    public void Golden_Gun(Player p,boolean is3){
+//        final int total_time;
+//        //newÇ¹,¸½Ä§,Ê¹ÓÃÊ±¼ä
+//        ItemStack Gun=new ItemStack(Material.GOLDEN_HOE);
+//        Gun.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
+//        //Ìí¼Ó³¬ÄÜÊ¹ÓÃÖĞTag
+//        p.addScoreboardTag("Golden_Gun_Using");
+//        ItemMeta GunMeta=Gun.getItemMeta();
+//        if(is3){
+//            total_time=25;
+//            p.addScoreboardTag("Golden_Gun_3");
+//            GunMeta.setDisplayName("¾«×¼»Æ½ğÇ¹");
+//            p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,500,2,false));
+//        }else{
+//            total_time=15;
+//            p.addScoreboardTag("Golden_Gun_6");
+//            GunMeta.setDisplayName("ÁÒÑæ»Æ½ğÇ¹");
+//            p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,240,1,false));
+//        }
+//        Gun.setItemMeta(GunMeta);
+//        p.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
+//        p.getInventory().setItemInMainHand(Gun);
+//    }
 
-    //é¬¼çµåˆ©åˆƒ
+    //¹íÁéÀûÈĞ
     public void Spectral_Blades(Player p){
-        ItemStack sword=new ItemStack(Material.DIAMOND_SWORD);
-        ItemMeta swordMeta=sword.getItemMeta();
-        swordMeta.setDisplayName("é¬¼çµåˆ©åˆƒ");
-        sword.setItemMeta(swordMeta);
-        sword.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
-        p.addScoreboardTag("Spectral_Blades_Using");
+        if(add_User_List(p)){
+            return;
+        }
+        Spectral_Blades_Listener.Spectral_Blades_User.add(p);
         p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,500,2,false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,500,0,false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,100,4,false));
-        p.getInventory().setItemInMainHand(sword);
+        p.getInventory().setItemInMainHand(Items.getSpectral_Blades_Sword());
         p.getWorld().playSound(p.getLocation(),Sound.ITEM_ARMOR_EQUIP_LEATHER,5.0f,0.5f);
         p.getWorld().playSound(p.getLocation(),Sound.ITEM_ARMOR_EQUIP_TURTLE,5.0f,0.5f);
         BukkitRunnable SB=new BukkitRunnable() {
@@ -383,7 +497,8 @@ public class Super_Power_Chooser implements Listener{
                     p.removePotionEffect(PotionEffectType.INVISIBILITY);
                     p.removePotionEffect(PotionEffectType.SPEED);
                     Destiny2.Misc.Misc.Remove_Items(p);
-                    p.getScoreboardTags().remove("Spectral_Blades_Using");
+                    remove_User_List(p);
+                    Spectral_Blades_Listener.Spectral_Blades_User.remove(p);
                     this.cancel();
                     return;
                 }
@@ -394,32 +509,26 @@ public class Super_Power_Chooser implements Listener{
         SB.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),0,20);
     }
 
-    //å“¨å…µåœ£ç›¾
+    //ÉÚ±øÊ¥¶Ü(Ğ§¹û²»ÀíÏë)
     public void Sentinel_Shield(Player p){
-        ItemStack Shield=new ItemStack(Material.SHIELD);
-        ItemStack Sword=new ItemStack(Material.DIAMOND_SWORD);
-        Shield.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
-        Shield.addUnsafeEnchantment(Enchantment.DURABILITY,5);
-        Sword.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
-        ItemMeta ShieldMate=Shield.getItemMeta();
-        ItemMeta SwordMate=Sword.getItemMeta();
-        ShieldMate.setDisplayName("åœ£ç›¾");
-        SwordMate.setDisplayName("åœ£å‰‘");
-        Shield.setItemMeta(ShieldMate);
-        Sword.setItemMeta(SwordMate);
+        if(add_User_List(p)){
+            return;
+        }
+        Player_Equipment.put(p,new Equipments(p));
+        Sentinel_Shield_Listener.Sentinel_User.add(p);
         p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,500,2,false));
-        p.addScoreboardTag("Sentinel_Shield_Using");
-        p.getInventory().setItemInOffHand(Shield);
-        p.getInventory().setItemInMainHand(Sword);
+        p.getInventory().setItemInMainHand(Items.getSentinel_Sword());
+        p.getInventory().setItemInOffHand(Items.getSentinel_Shield());
         BukkitRunnable Shielder=new BukkitRunnable() {
             int time=25;
             @Override
             public void run() {
                 if(time<=0||p.isDead()||!p.hasPotionEffect(PotionEffectType.DAMAGE_RESISTANCE)){
-                    p.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
-                    p.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
+                    p.getInventory().setItemInOffHand(Player_Equipment.get(p).getOffHand());
+                    p.getInventory().setItemInMainHand(Player_Equipment.get(p).getMainHand());
                     p.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
-                    p.getScoreboardTags().remove("Sentinel_Shield_Using");
+                    Sentinel_Shield_Listener.Sentinel_User.remove(p);
+                    remove_User_List(p);
                     this.cancel();
                     return;
                 }
@@ -429,37 +538,42 @@ public class Super_Power_Chooser implements Listener{
         Shielder.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),0,20);
     }
 
-    //é»æ˜
+    //ÀèÃ÷
     public void Daybreak(Player p){
-        ItemStack Sword=new ItemStack(Material.GOLDEN_SWORD);
-        ItemMeta SwordMata=Sword.getItemMeta();
-        SwordMata.setDisplayName("é»æ˜");
-        List<String> lore=new LinkedList<>();
-        lore.add("Â§eæˆ‘å°†ä¼šæ˜¯é»æ˜ä¸­çš„å‡¤å‡°ï¼");
-        lore.add("Â§eä¸–ç•Œå°†ä¼šè¢«æˆ‘ç…§äº®ï¼");
-        lore.add("Â§eé»æ˜ä¹‹å‰‘å°†å®ˆæŠ¤ä¸–ç•Œï¼");
-        SwordMata.setLore(lore);
-        Sword.setItemMeta(SwordMata);
-        Sword.addUnsafeEnchantment(Enchantment.BINDING_CURSE,5);
-        p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,500,2,false));
-        p.getInventory().setItemInMainHand(Sword);
-        p.setVelocity(p.getVelocity().multiply(0.1f).setY(0.5));
+        if(add_User_List(p)){
+            return;
+        }
+        Daybreak_Listener.Day_Break_User.add(p);
+
+        DestinyMain.Player_Exp.put(p,new Exp(p));
+        Exp.CoolTime(15,p);
+
+        Player_Equipment.put(p,new Equipments(p));
+
+        p.getInventory().setItemInMainHand(Items.getDaybreak_Sword());
         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION,10,0,false));
-        p.addScoreboardTag("Daybreak_Using");
+        p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,500,2,false));
+        p.setVelocity(p.getVelocity().multiply(0.1f).setY(0.5));
+
+
+
         BukkitRunnable Daybreak=new BukkitRunnable() {
             int time=25;
             @Override
             public void run() {
-                if(p.getInventory().getItemInMainHand().getType()!=Material.AIR&&time<=0||p.isDead()
+                if(time<=0||p.isDead()
+                        ||p.getInventory().getItemInMainHand().getType()==Material.AIR
                         ||((Damageable) p.getInventory().getItemInMainHand().getItemMeta()).getDamage()>=(Material.GOLDEN_SWORD).getMaxDurability()
                         ||p.getPotionEffect(PotionEffectType.DAMAGE_RESISTANCE)==null){
-                    p.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
-                    p.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
+                    p.getInventory().setItemInOffHand(Player_Equipment.get(p).getOffHand());
+                    p.getInventory().setItemInMainHand(Player_Equipment.get(p).getMainHand());
                     p.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
                     if(p.hasPotionEffect(PotionEffectType.SLOW_FALLING)){
                         p.removePotionEffect(PotionEffectType.SLOW_FALLING);
                     }
-                    p.getScoreboardTags().remove("Daybreak_Using");
+                    Player_Equipment.remove(p);
+                    Daybreak_Listener.Day_Break_User.remove(p);
+                    remove_User_List(p);
                     this.cancel();
                     return;
                 }
@@ -469,4 +583,208 @@ public class Super_Power_Chooser implements Listener{
         };
         Daybreak.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),0,20);
     }
+
+    //ÀûÈĞµ¯Ä»
+    public void Blade_Barrage(Player p){
+        if(add_User_List(p)){
+            return;
+        }
+
+        p.getWorld().playSound(p.getLocation(),Sound.ENTITY_EXPERIENCE_ORB_PICKUP,4.0f,0.5f);
+        p.getWorld().playSound(p.getLocation(),Sound.ITEM_FLINTANDSTEEL_USE,4.0f,0.5f);
+        p.getWorld().playSound(p.getLocation(),Sound.ENTITY_SKELETON_AMBIENT,4.0f,0.25f);
+        p.getWorld().playSound(p.getLocation(),Sound.ENTITY_SKELETON_HORSE_HURT,4.0f,0.25f);
+        p.setVelocity(p.getVelocity().multiply(0.1).setY(0.75f));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING,30,4,false));
+
+        BukkitRunnable shoot=new BukkitRunnable() {
+            boolean First=true;
+
+            @Override
+            public void run() {
+                if(First){
+                    Arrow ar=Spawn_Arrow(p,true);
+                    for(int arrows=1;arrows<Blade_Barrage_Listener.Per_Arrows;arrows++){
+                        if(p.isDead()){
+                            First=false;
+                            break;
+                        }
+                        Arrow_Rotate(ar, p);
+                    }
+                }else{
+                    Arrow ar=Spawn_Arrow(p,false);
+                    for(int arrows=1;arrows<Blade_Barrage_Listener.Per_Arrows;arrows++){
+                        if(p.isDead()){
+                            break;
+                        }
+                        Arrow_Rotate(ar, p);
+                    }
+                }
+
+                if(!First||p.isDead()){
+                    this.cancel();
+                    remove_User_List(p);
+                }
+                First=false;
+            }
+        };
+        shoot.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),15,5);
+
+
+
+    }
+    private void Arrow_Rotate(Arrow ar, Player p) {
+        Vector vector;
+        Arrow arrow;
+        vector=ar.getVelocity().clone();
+        arrow=(Arrow)p.getWorld().spawnEntity(ar.getLocation(), EntityType.ARROW);
+        arrow.addScoreboardTag("Clean");
+        ar.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
+        vector.rotateAroundX(Math.PI/(24+Math.random()*6)* Misc.RandomPositiveMinus());
+        vector.rotateAroundZ(Math.PI/(24+Math.random()*6)*Misc.RandomPositiveMinus());
+        vector.rotateAroundY(Math.PI/(30+Math.random()*6)* Misc.RandomPositiveMinus());
+        arrow.setVelocity(vector);
+        arrow.addScoreboardTag("Blade_Barrage");
+        arrow.setInvulnerable(true);
+        arrow.setKnockbackStrength(0);
+        arrow.setGravity(true);
+        Misc.aTrack(arrow, Blade_Barrage_Listener.Track_Radius,100,0,0.03,2,true,true,0);
+    }
+    private Arrow Spawn_Arrow(Player p,boolean is_left){
+        Arrow ar=(Arrow)p.getWorld().spawnEntity(p.getEyeLocation(),EntityType.ARROW);
+        ar.addScoreboardTag("Clean");
+        ar.setShooter(p);
+        ar.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
+        ar.addScoreboardTag("Blade_Barrage");
+        ar.setInvulnerable(true);
+        ar.setKnockbackStrength(0);
+        ar.setGravity(true);
+        ar.setVelocity(p.getEyeLocation().getDirection().multiply(1.5).rotateAroundY((is_left?1:-1)*Math.PI / (6*Math.random()+12)));
+        Misc.aTrack(ar, Blade_Barrage_Listener.Track_Radius,100,0,0.03,2,true,true,0);
+        return ar;
+    }
+
+    public void Silence_and_Squall(Player p){
+        if(add_User_List(p)){
+            return;
+        }
+
+        p.setGravity(false);
+        p.setVelocity(p.getVelocity().multiply(0.1f));
+
+
+        BukkitRunnable Throw=new BukkitRunnable() {
+            boolean Throw=false;
+            @Override
+            public void run() {
+//                Snowball sb=(Snowball) p.getWorld().spawnEntity(p.getEyeLocation(),EntityType.SNOWBALL);
+//                ArmorStand as=(ArmorStand)p.getWorld().spawnEntity(sb.getLocation(),EntityType.ARMOR_STAND);
+                ArmorStand as=(ArmorStand)p.getWorld().spawnEntity(p.getEyeLocation(),EntityType.ARMOR_STAND);
+                as.addScoreboardTag("Clean");
+                as.setInvulnerable(true);
+                as.setVisible(false);
+                as.setBasePlate(false);
+                as.addScoreboardTag("No_Break");
+                as.addScoreboardTag(p.getUniqueId().toString());
+                as.getEquipment().setItemInMainHand(new ItemStack(Material.DIAMOND_PICKAXE));
+                as.setCollidable(false);
+                as.setVelocity(p.getLocation().getDirection().multiply(1.5f));
+
+                if(!Throw){
+                    as.addScoreboardTag("Silence_and_Squall_1");
+                    as.setRotation(p.getLocation().getPitch(),0);
+                    as.teleport(as.getLocation().add(0,p.getEyeHeight()/2,0).setDirection(p.getLocation().getDirection()));
+                    as.setRightArmPose(new EulerAngle(3.65,0,0));
+                    Silence_and_Squall_Listener.Rotate(as,p,false);
+                }else{
+                    as.addScoreboardTag("Silence_and_Squall_2");
+                    as.setRightArmPose(new EulerAngle(3.10,3.12,1.54));
+                    Silence_and_Squall_Listener.Rotate(as,p,true);
+                }
+                if(Throw){
+                    remove_User_List(p);
+                    p.setGravity(true);
+                    this.cancel();
+                }
+                Throw=true;
+            }
+        };
+        Throw.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),15,15);
+
+    }
+
+    public void Burning_Maul(Player p){
+        if(add_User_List(p)||Burning_Maul_Listener.add(p)){
+            return;
+        }
+        Player_Equipment.put(p,new Equipments(p));
+        p.getEquipment().setItemInMainHand(Items.getBurning_Big_Axe());
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,300, p.hasPotionEffect(PotionEffectType.SPEED)?p.getPotionEffect(PotionEffectType.SPEED).getAmplifier()+1:0,false));
+    }
+
+    public void Hammer_of_Sol(Player p){
+        if(add_User_List(p)){
+            return;
+        }
+        Player_Equipment.put(p,new Equipments(p));
+        p.getEquipment().setItemInMainHand(Items.getHammer_of_SolAxe());
+    }
+
+    public void Storm_Trance(Player p){
+        if(add_User_List(p)){
+            return;
+        }
+        Storm_Trance_Listener.add(p);
+        p.getEquipment().setItemInMainHand(new ItemStack(Material.AIR));
+        Misc.Make_Explode(p,Storm_Trance_Listener.Storm_Explode_Range);
+        Summon.summon_Lightning(p.getLocation(),Storm_Trance_Listener.Storm_Lightning_Range,Storm_Trance_Listener.Storm_Lightning_Times);
+        int[] rgb={0,255,255};
+        BukkitRunnable br=new BukkitRunnable() {
+            int time=0;
+            @Override
+            public void run() {
+                Summon.summon_Redstone_Particle(p.getLocation(),Storm_Trance_Listener.Storm_Attack_Range[0],48,1,false,rgb);
+                if(time>Storm_Trance_Listener.Storm_Time/4||p.isDead()){
+                    remove_User_List(p);
+                    Storm_Trance_Listener.remove(p);
+                    this.cancel();
+                }
+                time++;
+            }
+        };
+        br.runTaskTimer(DestinyMain.getPlugin(DestinyMain.class),10,5);
+    }
+
+
+//    public void Chaos_Reach(Player p){
+//        if(add_User_List(p)){
+//            return;
+//        }
+//
+//        if (!lasers.containsKey(p)) return;
+//
+//        Chaos_Reach.LaserRunnable run = lasers.get(p);
+//        if (run.loading != Chaos_Reach.LaserRunnable.LOADING_TIME) return;
+//        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 2, 1);
+//        run.loading = 0;
+//
+//        for (Block blc : p.getLineOfSight(null, Chaos_Reach.LaserRunnable.RANGE / 2)){
+//            for (Entity en : p.getWorld().getNearbyEntities(blc.getLocation(), 1, 1, 1)){
+//                if (en instanceof Player) continue;
+//                if (en instanceof LivingEntity){
+//                    ((LivingEntity) en).damage(20, p);
+//                    en.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, en.getLocation(), 4, 1, 1, 1, 0.1);
+//                }
+//            }
+//        }
+//        p.getWorld().spawnParticle(Particle.SMOKE_LARGE, run.laser.getEnd(), 5);
+//        try {
+//            run.laser.callColorChange();
+//        }catch (ReflectiveOperationException e1) {
+//            e1.printStackTrace();
+//        }
+//        p.setGravity(false);
+//        p.setVelocity(p.getVelocity().zero());
+//
+//    }
 }

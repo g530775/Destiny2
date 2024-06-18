@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.entity.EntityDropItemEvent;
 
 public class Drop_Listener implements Listener {
-    //ç¦æ­¢ä¸¢å¼ƒ
+    //½ûÖ¹¶ªÆú
     @EventHandler
     public void No_Drop(PlayerDropItemEvent pdie){
         ItemStack i=pdie.getItemDrop().getItemStack();
@@ -20,7 +20,7 @@ public class Drop_Listener implements Listener {
         if(i.getEnchantmentLevel(Enchantment.BINDING_CURSE)==5){
             String name=i.getItemMeta().getDisplayName();
             switch (name) {
-                case "é›·éœ†å†²å‡»" -> {
+                case "À×öª³å»÷" -> {
                     pdie.setCancelled(true);
                     p.getInventory().setChestplate(i);
                     p.setGliding(true);

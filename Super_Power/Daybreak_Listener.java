@@ -20,18 +20,27 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.util.LinkedList;
+
 public class Daybreak_Listener implements Listener {
+    public static LinkedList<Player> Day_Break_User=new LinkedList<>();
+
+    public double[] Ball_Track_Radius={3.00,3.00,3.00};
+    public double Day_Break_Damage=25.00;
+    public int Day_Break_Attack_Cool_Time_Ticks=18;
+    public int Day_Break_Fly_Cool_Time_Ticks=20;
+
+
+    //空中停滞
     @EventHandler
     public void Daybreak(PlayerToggleSneakEvent ptse){
         Player p=ptse.getPlayer();
-        if(p.getScoreboardTags().contains("Daybreak_Using")&&!p.isSneaking()){
-            if(p.getInventory().getItemInMainHand().getEnchantmentLevel(Enchantment.BINDING_CURSE)==5){
-                if(p.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
-                    p.removePotionEffect(PotionEffectType.SLOW_FALLING);
-                }else{
-                    p.setVelocity(p.getVelocity().setY(0));
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING,600,4,false));
-                }
+        if(Day_Break_User.contains(p)&&!p.isSneaking()&&!p.isOnGround()){
+            if(p.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
+                p.removePotionEffect(PotionEffectType.SLOW_FALLING);
+            }else{
+                p.setVelocity(p.getVelocity().setY(0));
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING,600,4,false));
             }
         }
     }
@@ -39,42 +48,35 @@ public class Daybreak_Listener implements Listener {
     //击中
     @EventHandler
     public void hit(ProjectileHitEvent phe){
-        Entity projectile=phe.getEntity();
-        Entity hit=phe.getHitEntity();
-        Player player;
-        if(projectile instanceof Snowball sb&&sb.getShooter() instanceof Player p){
-            player=p;
-            if(hit instanceof LivingEntity le){
-                le.setLastDamage(20);
-                le.setNoDamageTicks(0);
-            }
-            if(projectile.getScoreboardTags().contains("Daybreak_Ball")){
-                Misc.Make_Explode(projectile.getWorld(),projectile.getLocation(),1.5f,projectile);
-                for(Entity en:projectile.getNearbyEntities(2,2,2)){
-                    if(en instanceof LivingEntity le){
-                        le.setFireTicks(100);
-                        le.setNoDamageTicks(0);
-                    }
+        if(phe.getEntity() instanceof Snowball sb&&sb.getScoreboardTags().contains("Daybreak_Ball")
+                &&phe.getHitEntity() instanceof LivingEntity le
+                &&sb.getShooter() instanceof Player p){
+            le.setLastDamage(Day_Break_Damage);
+            le.setNoDamageTicks(0);
+            Misc.Make_Explode(sb.getWorld(),sb.getLocation(),1.5f,sb);
+            for(Entity en:sb.getNearbyEntities(2,2,2)){
+                if(en instanceof LivingEntity les&&!les.getUniqueId().equals(p.getUniqueId())){
+                    les.setFireTicks(100);
+                    les.setNoDamageTicks(0);
                 }
             }
         }
 
     }
 
-    //受伤
+    //爆炸伤害
     @EventHandler
     public void damage(EntityDamageByEntityEvent edbee){
-        if(edbee.getEntity() instanceof LivingEntity le){
-            Entity damager=edbee.getDamager();
-            if(damager.getScoreboardTags().contains("Daybreak_Ball") &&edbee.getCause()== EntityDamageEvent.DamageCause.ENTITY_EXPLOSION){
-                if(damager.getScoreboardTags().contains(le.getUniqueId().toString())){
-                    edbee.setCancelled(true);
-                }else {
-                    edbee.setDamage(35 / damager.getLocation().distance(le.getLocation()));
-                }
+        if(edbee.getEntity() instanceof LivingEntity le&&edbee.getDamager() instanceof Snowball sb
+                &&sb.getScoreboardTags().contains("Daybreak_Ball")
+                &&sb.getShooter() instanceof Player p
+                &&edbee.getCause()== EntityDamageEvent.DamageCause.ENTITY_EXPLOSION){
+            if(p.getUniqueId().equals(le.getUniqueId())){
+                edbee.setCancelled(true);
+            }else {
+                edbee.setDamage(35 / sb.getLocation().distance(le.getLocation()));
             }
         }
-
     }
 
     //挥动判定
@@ -82,13 +84,13 @@ public class Daybreak_Listener implements Listener {
     public void judge(PlayerAnimationEvent pae){
         Player p= pae.getPlayer();
         //飞天判定
-        if(p.getScoreboardTags().contains("Daybreak_Using")){
+        if(Day_Break_User.contains(p)){
             //飞行判定
             if(p.isSneaking()
                     &&p.getInventory().getItemInMainHand().getEnchantmentLevel(Enchantment.BINDING_CURSE)==5
                     &&!p.hasCooldown(Material.GOLDEN_SWORD) &&pae.getAnimationType()== PlayerAnimationType.ARM_SWING){
                 p.setVelocity(p.getLocation().getDirection().multiply(1.2).setY(0.4));
-                p.setCooldown(Material.GOLDEN_SWORD,20);
+                p.setCooldown(Material.GOLDEN_SWORD,Day_Break_Fly_Cool_Time_Ticks);
                 if(!p.hasCooldown(Material.GOLDEN_HOE)){
                     p.setCooldown(Material.GOLDEN_HOE,5);
                 }
@@ -105,12 +107,12 @@ public class Daybreak_Listener implements Listener {
                     &&!p.isSneaking()) {
 
 
-                p.setCooldown(Material.GOLDEN_HOE,18);
+                p.setCooldown(Material.GOLDEN_HOE,Day_Break_Attack_Cool_Time_Ticks);
                 p.setVelocity(p.getVelocity().setY(0.45));
                 Entity e=p.getWorld().spawnEntity(p.getEyeLocation(), EntityType.SNOWBALL);
                 ((Snowball)e).setShooter(p);
                 e.addScoreboardTag("Daybreak_Ball");
-                e.addScoreboardTag(p.getUniqueId().toString());
+                e.addScoreboardTag("No_Break");
                 e.setInvulnerable(true);
 
                 float pitch=p.getLocation().getPitch();
@@ -135,7 +137,8 @@ public class Daybreak_Listener implements Listener {
 
                 e.getLocation().setDirection(p.getLocation().getDirection());
                 Effect(e);
-                Misc.Track(p,e,5,5,5,200,0);
+//                Misc.Track(p,e,5,5,5,200,0);
+                Misc.aTrack(e,Ball_Track_Radius,60,1,0,0,false,false,0);
                 Misc.Reduce_DAMAGE_RESISTANCE_PotionEffect(p,10);
                 p.getInventory().setItemInMainHand(Misc.itemDamage(p.getInventory().getItemInMainHand(),10,true));
                 p.updateInventory();
@@ -144,8 +147,11 @@ public class Daybreak_Listener implements Listener {
     }
 
     //落地检测
-    @EventHandler
+//    @EventHandler
     public void movement(PlayerMoveEvent pme){
+        if(true){
+            return;
+        }
         Player p= pme.getPlayer();
 
         if(p.getScoreboardTags().contains("Daybreak_Using")){
@@ -188,6 +194,7 @@ public class Daybreak_Listener implements Listener {
 
     }
 
+    //弹道特效
     void Effect(Entity e){
 
         new BukkitRunnable(){

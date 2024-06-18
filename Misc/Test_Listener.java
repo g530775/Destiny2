@@ -61,22 +61,53 @@ public class Test_Listener implements Listener {
             if(p.getInventory().getItemInMainHand().getType()==Material.AIR){
                 return;
             }
-            if(E.getType()==EntityType.ARMOR_STAND&&E.getScoreboardTags().contains("Pose")){
+            if(E.getType()==EntityType.ARMOR_STAND&&E.getScoreboardTags().contains("Pose")&&!E.getScoreboardTags().contains("p")){
+                ((ArmorStand) E).setArms(true);
+                if(p.getInventory().getItemInOffHand().getType()!=Material.AIR){
+                    ((ArmorStand) E).getEquipment().setItemInMainHand(p.getInventory().getItemInOffHand());
+                    E.addScoreboardTag("p");
+                }
+            }
+
+            if(E instanceof ArmorStand ass&&E.getScoreboardTags().contains("Pose")){
                 e.setCancelled(true);
                 switch (p.getInventory().getItemInMainHand().getItemMeta().getDisplayName()) {
-                    case "x" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0.01D, 0, 0));
-                    case "10x" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0.1D, 0, 0));
-                    case "y" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0, 0.01D, 0));
-                    case "10y" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0, 0.1D, 0));
-                    case "z" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0, 0, 0.01D));
-                    case "10z" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0, 0, 0.1D));
-                    case "remove" -> as.remove();
+//                    case "x" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0.01D, 0, 0));
+//                    case "10x" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0.1D, 0, 0));
+//                    case "y" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0, 0.01D, 0));
+//                    case "10y" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0, 0.1D, 0));
+//                    case "z" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0, 0, 0.01D));
+//                    case "10z" -> ((ArmorStand) E).setRightArmPose(as.getRightArmPose().add(0, 0, 0.1D));
+//                    case "remove" -> as.remove();
+                    case "x" ->rotate(p.isSneaking(),ass,0.01,0,0);
+                    case "10x" ->rotate(p.isSneaking(),ass,0.1,0,0);
+                    case "y" -> rotate(p.isSneaking(),ass,0,0.01,0);
+                    case "10y" -> rotate(p.isSneaking(),ass,0,0.1,0);
+                    case "z" -> rotate(p.isSneaking(),ass,0,0,0.01);
+                    case "10z" -> rotate(p.isSneaking(),ass,0,0,0.1);
                 }
                 p.sendMessage(as.getRightArmPose().getX()+"/"+as.getRightArmPose().getY()+"/"+as.getRightArmPose().getZ());
+            }
+
+            if(E.getType()==EntityType.ARMOR_STAND){
+                e.setCancelled(true);
+                switch (p.getInventory().getItemInMainHand().getItemMeta().getDisplayName()){
+                    case "lock"-> E.setGravity(false);
+                    case "unlock"-> E.setGravity(true);
+                    case "up"->E.teleport(E.getLocation().add(0,0.5f,0));
+                    case "down"->E.teleport(E.getLocation().subtract(0,0.5f,0));
+                }
             }
         }
     }
 
+    public void rotate(boolean sneaking,ArmorStand as,double x,double y,double z){
+        if(sneaking){
+            as.setRightArmPose(as.getRightArmPose().subtract(x,y,z));
+        }else{
+            as.setRightArmPose(as.getRightArmPose().add(x,y,z));
+        }
+    }
 
 
 

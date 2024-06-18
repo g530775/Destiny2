@@ -2,22 +2,27 @@ package Destiny2;
 
 import Destiny2.Misc.*;
 import Destiny2.Super_Power.*;
-import Destiny2.Variable_Construction.Hunter;
-import Destiny2.Variable_Construction.Test;
-import Destiny2.Variable_Construction.Warlock;
-import Destiny2.Variable_Construction.Titan;
+import Destiny2.Variable_Construction.*;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 
 public class DestinyMain extends JavaPlugin {
@@ -42,22 +47,24 @@ public class DestinyMain extends JavaPlugin {
             "Well_Of_Radiance_ArmorStand","Nova_Bomb","Gathering_Storm_Trident","Nova_Bomb_Shulker_Bullet",
             "Hammer_Of_Sol_ArmorStand","Daybreak_Ball"
     };
-    public static Titan T = new Titan();
-    public static Warlock W = new Warlock();
-    public static Hunter H = new Hunter();
     public static Test Te=new Test();
     public static Summon P=new Summon();
     public static String PluginHead;
     public static FileConfiguration Config;
+    public static LinkedList<Player> Super_Power_User=new LinkedList<>();
+    public static Map<Player,Exp> Player_Exp=new HashMap<>();
+
+    public static Map<Player, Equipments> Player_Equipment=new HashMap<>();
+
     @Override
     public void onEnable() {
-        getLogger().info("æ’ä»¶å·²è½½å…¥!");
-        getLogger().info("æœ¬æ’ä»¶ä»…ä¾›å¨±ä¹å­¦ä¹ ,ç¦æ­¢ç”¨äºå…¶ä»–ç”¨é€”.");
-        getLogger().info("æ’ä»¶ä¼šä¿®æ”¹ç©å®¶ç›”ç”²,è£…å¤‡ç­‰é“å…·å¹¶ä¸”æ— æ³•æ¢å¤,å› æ­¤å¼ºçƒˆå»ºè®®ç”¨äºå¨±ä¹æœ.");
-        getLogger().info("æœ¬æ’ä»¶æ‰€ç”¨ä»£ç éƒ¨åˆ†æ¥è‡ªå…¶ä»–å¼€æºæˆ–é—­æº(å·²æˆæƒ)ä½œå“");
+        getLogger().info("²å¼şÒÑÔØÈë!");
+        getLogger().info("±¾²å¼ş½ö¹©ÓéÀÖÑ§Ï°,½ûÖ¹ÓÃÓÚÆäËûÓÃÍ¾.");
+        getLogger().info("²å¼ş»áĞŞ¸ÄÍæ¼Ò¿ø¼×,×°±¸µÈµÀ¾ß²¢ÇÒÎŞ·¨»Ö¸´,Òò´ËÇ¿ÁÒ½¨ÒéÓÃÓÚÓéÀÖ·ş.");
+        getLogger().info("±¾²å¼şËùÓÃ´úÂë²¿·ÖÀ´×ÔÆäËû¿ªÔ´»ò±ÕÔ´(ÒÑÊÚÈ¨)×÷Æ·");
         saveDefaultConfig();
         Config = getConfig();
-        PluginHead=Config.getString("Plugin_Setting.Head").replace("&","Â§")+"Â§f";
+        PluginHead=Config.getString("Plugin_Setting.Head").replace("&","¡ì")+"¡ìf";
 
         SpecialTag.addAll(Arrays.asList(Special_Tag));
 
@@ -71,17 +78,28 @@ public class DestinyMain extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new Pick_Up_Listener(),this);
         Bukkit.getPluginManager().registerEvents(new Nova_Bomb_Listener(),this);
         Bukkit.getPluginManager().registerEvents(new Misc_Listener(),this);
-        Bukkit.getPluginManager().registerEvents(new Spectral_Blades(),this);
+        Bukkit.getPluginManager().registerEvents(new Spectral_Blades_Listener(),this);
         Bukkit.getPluginManager().registerEvents(new Sentinel_Shield_Listener(),this);
         Bukkit.getPluginManager().registerEvents(new Daybreak_Listener(),this);
         Bukkit.getPluginManager().registerEvents(new Thunder_Crash_Listener(),this);
+        Bukkit.getPluginManager().registerEvents(new Blade_Barrage_Listener(),this);
+        Bukkit.getPluginManager().registerEvents(new Silence_and_Squall_Listener(),this);
+        Bukkit.getPluginManager().registerEvents(new Burning_Maul_Listener(),this);
+        Bukkit.getPluginManager().registerEvents(new Hammer_of_Sol(),this);
+        Bukkit.getPluginManager().registerEvents(new Storm_Trance_Listener(),this);
 
-        //Bukkit.getPluginManager().registerEvents(new Test_Listener(),this);
+        Bukkit.getPluginManager().registerEvents(new Test_Listener(),this);
     }
     @Override
     public void onDisable(){
         clean();
-        getLogger().info("æ’ä»¶å·²å¸è½½!");
+//        try{
+//            Chaos_Reach.lasers.forEach((p, run) -> run.laser.stop());
+//        }catch (NoClassDefFoundError e){
+//            e.printStackTrace();
+//        }
+        getLogger().info("²å¼şÒÑĞ¶ÔØ!");
+
     }
     public static void clean(){
         LinkedList<Player> playerList=new LinkedList<>(Bukkit.getOnlinePlayers());
@@ -98,6 +116,9 @@ public class DestinyMain extends JavaPlugin {
                 player.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
             }
         }
+        for(ArmorStand as:Well_Of_Radiance_Listener.ArmorStands){
+            as.remove();
+        }
     }
 
     private void loadConfig() {
@@ -111,18 +132,33 @@ public class DestinyMain extends JavaPlugin {
                 if (args[0].equalsIgnoreCase("reload")) {
                     reloadConfig();
                     loadConfig();
-                    sender.sendMessage(PluginHead+"é…ç½®é‡è½½æˆåŠŸ");
+                    sender.sendMessage(PluginHead+"ÅäÖÃÖØÔØ³É¹¦");
                 } else {
-                    sender.sendMessage(PluginHead+"æœªçŸ¥çš„æŒ‡ä»¤");
+                    sender.sendMessage(PluginHead+"Î´ÖªµÄÖ¸Áî");
                 }
             } else {
-                sender.sendMessage(PluginHead+"æ‚¨æ— æƒé™");
+                sender.sendMessage(PluginHead+"ÄúÎŞÈ¨ÏŞ");
             }
         } else {
-            sender.sendMessage(PluginHead+"å½“æˆ‘æ‰“å‡º?æ—¶,ä¸æ˜¯æˆ‘æœ‰é—®é¢˜,è€Œæ˜¯æ‚¨æœ‰é—®é¢˜");
+            sender.sendMessage(PluginHead+"µ±ÎÒ´ò³ö?Ê±,²»ÊÇÎÒÓĞÎÊÌâ,¶øÊÇÄúÓĞÎÊÌâ");
         }
         return true;
     }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e){
+        if (Chaos_Reach.lasers.containsKey(e.getPlayer())){
+            Chaos_Reach.lasers.get(e.getPlayer()).cancel();
+        }
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent e){
+        if (Chaos_Reach.lasers.containsKey(e.getEntity())){
+            Chaos_Reach.lasers.get(e.getEntity()).cancel();
+        }
+    }
+
 
 
 }
